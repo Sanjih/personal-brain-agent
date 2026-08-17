@@ -1,0 +1,7 @@
+openai
+scenedetect[opencv]
+ultralytics
+opencv-python
+mediapipe
+pillow
+python-dotenv
