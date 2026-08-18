@@ -3,22 +3,39 @@ import requests
 
 API_URL = "http://127.0.0.1:8000"
 
-st.set_page_config(page_title="Motion AI Coach", page_icon="🥊", layout="wide")
+st.set_page_config(page_title="Motion AI Coach", page_icon="⏱️", layout="wide")
 
-# Style CSS personnalisé pour l'UX
+# CSS pour le style de la Timeline
 st.markdown("""
     <style>
     .main { background-color: #0e1117; }
     .stMetric { background-color: #1e222d; padding: 15px; border-radius: 10px; }
-    .advice-card-urgent { background-color: #3b1111; border-left: 5px solid #ff4b4b; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-    .advice-card-warning { background-color: #3b2b11; border-left: 5px solid #ffa100; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-    .advice-card-good { background-color: #113b1b; border-left: 5px solid #00c853; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+    
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: monospace;
+    }
+    .time-badge {
+        background-color: #262730;
+        color: #00d4ff;
+        padding: 4px 8px;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-right: 15px;
+        border: 1px solid #00d4ff;
+    }
+    .bg-urgent { background-color: #3b1111; border-left: 4px solid #ff4b4b; }
+    .bg-warning { background-color: #3b2b11; border-left: 4px solid #ffa100; }
+    .bg-good { background-color: #113b1b; border-left: 4px solid #00c853; }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🎬 Motion AI Studio — Votre Coach Personnel")
+st.title("⏱️ Motion AI Studio — Analyse Temporelle")
 
-# Barre latérale : Clé API & Solde
 st.sidebar.header("👤 Mon Compte")
 api_key = st.sidebar.text_input("Clé API", value="secret123", type="password")
 
@@ -29,28 +46,26 @@ if res.status_code == 200:
     balance = res.json()["balance_minutes"]
     st.sidebar.metric("Solde Crédits", f"{balance} min")
 else:
-    st.sidebar.error("Clé API non reconnue")
+    st.sidebar.error("Clé API invalide")
 
-# Choix de la discipline
-st.subheader("1. Choisissez votre discipline")
+st.subheader("1. Discipline")
 col_mode1, col_mode2 = st.columns(2)
 with col_mode1:
-    mode_combat = st.checkbox("🥊 Sports de Combat (Boxe/MMA)", value=True)
+    mode_combat = st.checkbox("🥊 Sports de Combat", value=True)
 with col_mode2:
     mode_dance = st.checkbox("💃 Danse & Chorégraphie", value=not mode_combat)
 
 selected_mode = "combat" if mode_combat else "dance"
 
-# Drag and drop vidéo
-st.subheader("2. Importer votre vidéo")
-uploaded_file = st.file_uploader("Glissez-déposez votre vidéo ici (MP4, MOV)", type=["mp4", "mov", "avi"])
+st.subheader("2. Importer la vidéo")
+uploaded_file = st.file_uploader("Choisissez un fichier vidéo", type=["mp4", "mov", "avi"])
 
 if uploaded_file is not None:
-    if st.button("🚀 Analyser ma prestation", type="primary", use_container_width=True):
+    if st.button("🚀 Générer la Timeline du Coach", type="primary", use_container_width=True):
         endpoint = f"/analyze/{selected_mode}"
         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "video/mp4")}
         
-        with st.spinner("L'IA étudie votre posture et vos mouvements..."):
+        with st.spinner("Analyse image par image en cours..."):
             response = requests.post(f"{API_URL}{endpoint}", headers=headers, files=files)
             
             if response.status_code == 200:
@@ -58,39 +73,40 @@ if uploaded_file is not None:
                 st.balloons()
                 
                 st.markdown("---")
-                st.subheader("📊 Rapport du Coach")
                 
-                # Haut de page : Score et Métriques
+                # Métriques haut de page
                 col1, col2, col3, col4 = st.columns(4)
                 col1.metric("Score Technique", f"{data['performance_score']} / 100")
-                col2.metric("Durée Déduite", f"{data['duration_minutes']} min")
+                col2.metric("Durée Analyse", f"{data['duration_minutes']} min")
                 col3.metric("Solde Restant", f"{data['remaining_balance_minutes']} min")
-                col4.metric("Frames Analysées", data['frames_analyzed'])
+                col4.metric("Frames Traitées", data['frames_analyzed'])
                 
                 st.markdown("---")
                 
-                # Section 2 colonnes : Conseils à gauche, Vidéo à droite
                 col_left, col_right = st.columns([1, 1])
                 
                 with col_left:
-                    st.subheader("💡 Conseils d'Amélioration")
-                    for advice in data["coach_advices"]:
-                        adv_type = advice["type"]
-                        text = advice["text"]
+                    st.subheader("⏱️ Chronologie des Remarques (Timeline)")
+                    
+                    for event in data["timeline_events"]:
+                        t_str = event["timestamp"]
+                        msg = event["message"]
+                        e_type = event["type"]
                         
-                        if adv_type == "urgent":
-                            st.markdown(f'<div class="advice-card-urgent">🔴 <b>Axe prioritaire :</b> {text}</div>', unsafe_allow_html=True)
-                        elif adv_type == "warning":
-                            st.markdown(f'<div class="advice-card-warning">🟡 <b>À corriger :</b> {text}</div>', unsafe_allow_html=True)
-                        else:
-                            st.markdown(f'<div class="advice-card-good">🟢 <b>Point fort :</b> {text}</div>', unsafe_allow_html=True)
+                        css_class = "bg-urgent" if e_type == "urgent" else ("bg-warning" if e_type == "warning" else "bg-good")
+                        icon = "🔴" if e_type == "urgent" else ("🟡" if e_type == "warning" else "🟢")
+                        
+                        st.markdown(f'''
+                            <div class="timeline-item {css_class}">
+                                <span class="time-badge">⏱️ {t_str}</span>
+                                <span>{icon} {msg}</span>
+                            </div>
+                        ''', unsafe_allow_html=True)
                 
                 with col_right:
-                    st.subheader("📹 Analyse Visuelle Squelettique")
+                    st.subheader("📹 Rendu Vidéo Annoté")
                     video_url = f"{API_URL}{data['annotated_video_url']}"
                     st.video(video_url)
                     
-            elif response.status_code == 402:
-                st.error("Solde insuffisant ! Rechargez vos minutes pour continuer.")
             else:
                 st.error(f"Erreur : {response.json().get('detail')}")
