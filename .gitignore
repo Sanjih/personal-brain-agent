@@ -3,3 +3,22 @@ venv/
 __pycache__/
 *.mp4
 output_scenes/
+
+# Python & Cache
+__pycache__/
+*.pyc
+
+# Fichiers temporaires & Poids YOLO
+*.mp4
+*.mov
+*.avi
+*.pt
+
+# Base de données locale
+*.db
+
+# Dossiers de rendu vidéo
+output_combat/
+output_dance/
+output_videos/
+runs/
