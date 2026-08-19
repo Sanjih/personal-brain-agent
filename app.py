@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://127.0.0.1:8080"
 
 st.set_page_config(page_title="Motion AI Coach", page_icon="⏱️", layout="wide")
 
